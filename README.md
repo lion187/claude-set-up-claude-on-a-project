@@ -106,7 +106,6 @@ Edit the file so it has these four parts, each lean and specific:
 - `tests/*.test.js`: picked up automatically by `node --test`.
 
 
-
 Then trim it: cut anything obvious from the code, any one-off notes, and anything sensitive. Shorter is stronger.
 
 #### 4. Add permission rules
@@ -122,13 +121,8 @@ Example shape:
 ```json
 {
   "permissions": {
-    "allow": [
-      "Bash(npm test:*)",
-      "Bash(npm run lint:*)"
-    ],
-    "ask": [
-      "Bash(git push:*)"
-    ],
+    "allow": ["Bash(npm test:*)", "Bash(npm run lint:*)"],
+    "ask": ["Bash(git push:*)"],
     "deny": [
       "Read(./.env)",
       "Read(./.env.*)",
