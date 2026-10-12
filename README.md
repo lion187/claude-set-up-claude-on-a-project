@@ -85,28 +85,26 @@ Edit the file so it has these four parts, each lean and specific:
 - a one-line description of what the project does
 - **Commands** — at least two you run often (here: `npm run dev`, `npm test`, `npm run lint`)
 
-No root `package.json`: run commands from inside `server/` or `client/`.
-
-- `server/` → `npm run dev`: starts the API with nodemon (needs `server/.env` with `MONGO_URL` and `PORT`)
-- `client/` → `npm start`: React dev server
-- `client/` → `npm test`: Jest; one file with `npm test -- src/path/File.test.js`
-- Linting runs through react-scripts during `start`/`build`; there is no separate lint script.
+- `npm run dev`: start the API with `node --watch` on port 3000 (or `PORT`)
+- `npm test`: run the tests with Node's built-in test runner
+- `npm run lint`: ESLint; CI runs lint and test on every push, so both must pass
 
 
 - **Conventions** — at least two real rules ("use X, not Y"), written so Claude can follow them without asking a question
 
-- Server uses ES modules: write `import`, not `require`, and include the `.js` extension in relative imports.
-- Client imports are absolute from `src` (`import Layout from "scenes/layout"`), not relative `../../` paths.
-- Take colors from `theme.palette.*` (including `neutral` and `background.alt`), never hard-coded hex values.
-- Start the server with `npm run dev`, not `npm start`; `start`/`build` in `server/package.json` are leftover react-scripts entries.
+- CommonJS only: use `require`/`module.exports`, not `import`/`export` (ESLint is set to `sourceType: "script"`).
+- Tests use `node:test` + `node:assert` with supertest against the exported `app`, not Jest or Mocha, and never a real port.
+- Routes never touch data directly: go through `db/store.js` functions, and add a new function there rather than editing the array from a route.
+- Errors return JSON `{ "error": "<message>" }` with the right status (400 for invalid input, 404 for not found); successful creates return 201.
+
 
 - **Architecture** — a few lines on how the project is organised (the `server.js` entry point, one route file per resource in `routes/`, data access through `db/store.js`)
 
-- `server/index.js`: entry point; sets up middleware and mounts `/client`, `/general`, `/management`, `/sales`.
-- One route file per area in `server/routes/<area>.js`, calling handlers from `server/controllers/<area>.js`.
-- `server/data/index.js`: seed data with fixed ObjectIds; Mongoose schemas go in `server/models/`.
-- Client pages live in `client/src/scenes/<name>/index.jsx` and render as nested routes under `<Layout />` in `App.js`.
-- Light/dark mode is the `mode` field in the Redux `global` slice (`client/src/state/index.js`).
+- `server.js`: entry point; mounts one router per resource and exports `app`. It only calls `listen` when run directly, so tests can import it.
+- `routes/<resource>.js`: one Express router per resource (`users`, `health`), mounted at `/<resource>`.
+- `db/store.js`: in-memory data access; resets on restart, so nothing persists.
+- `tests/*.test.js`: picked up automatically by `node --test`.
+
 
 
 Then trim it: cut anything obvious from the code, any one-off notes, and anything sensitive. Shorter is stronger.
@@ -126,14 +124,14 @@ Example shape:
   "permissions": {
     "allow": [
       "Bash(npm test:*)",
-      "Bash(npm run dev)",
-      "Bash(npm start)"
+      "Bash(npm run lint:*)"
     ],
     "ask": [
       "Bash(git push:*)"
     ],
     "deny": [
-      "Read(./**/.env)",
+      "Read(./.env)",
+      "Read(./.env.*)",
       "Bash(git push --force:*)",
       "Bash(git push -f:*)"
     ]
