@@ -45,9 +45,9 @@ npm run lint     # checks code style
    claude --version
    ```
 3. Get this repo onto your machine and open a terminal in the project folder. **Opening a terminal** (the app where you type commands):
-    -   **Mac** - press `Cmd + Space`, type "Terminal", press Enter.
-    -   **Windows** - open "Terminal" or "PowerShell" from the Start menu.
-    -   **Linux** - open your "Terminal" app (often `Ctrl + Alt + T`).**Getting into the project folder** - copy the repo to your machine, then move into it:
+   - **Mac** - press `Cmd + Space`, type "Terminal", press Enter.
+   - **Windows** - open "Terminal" or "PowerShell" from the Start menu.
+   - **Linux** - open your "Terminal" app (often `Ctrl + Alt + T`).**Getting into the project folder** - copy the repo to your machine, then move into it:
 
 ```
    git clone <your-repo-url>
@@ -84,8 +84,30 @@ Edit the file so it has these four parts, each lean and specific:
 
 - a one-line description of what the project does
 - **Commands** — at least two you run often (here: `npm run dev`, `npm test`, `npm run lint`)
+
+No root `package.json`: run commands from inside `server/` or `client/`.
+
+- `server/` → `npm run dev`: starts the API with nodemon (needs `server/.env` with `MONGO_URL` and `PORT`)
+- `client/` → `npm start`: React dev server
+- `client/` → `npm test`: Jest; one file with `npm test -- src/path/File.test.js`
+- Linting runs through react-scripts during `start`/`build`; there is no separate lint script.
+
+
 - **Conventions** — at least two real rules ("use X, not Y"), written so Claude can follow them without asking a question
+
+- Server uses ES modules: write `import`, not `require`, and include the `.js` extension in relative imports.
+- Client imports are absolute from `src` (`import Layout from "scenes/layout"`), not relative `../../` paths.
+- Take colors from `theme.palette.*` (including `neutral` and `background.alt`), never hard-coded hex values.
+- Start the server with `npm run dev`, not `npm start`; `start`/`build` in `server/package.json` are leftover react-scripts entries.
+
 - **Architecture** — a few lines on how the project is organised (the `server.js` entry point, one route file per resource in `routes/`, data access through `db/store.js`)
+
+- `server/index.js`: entry point; sets up middleware and mounts `/client`, `/general`, `/management`, `/sales`.
+- One route file per area in `server/routes/<area>.js`, calling handlers from `server/controllers/<area>.js`.
+- `server/data/index.js`: seed data with fixed ObjectIds; Mongoose schemas go in `server/models/`.
+- Client pages live in `client/src/scenes/<name>/index.jsx` and render as nested routes under `<Layout />` in `App.js`.
+- Light/dark mode is the `mode` field in the Redux `global` slice (`client/src/state/index.js`).
+
 
 Then trim it: cut anything obvious from the code, any one-off notes, and anything sensitive. Shorter is stronger.
 
@@ -102,9 +124,19 @@ Example shape:
 ```json
 {
   "permissions": {
-    "allow": ["Bash(npm test:*)"],
-    "ask": ["Bash(git push:*)"],
-    "deny": ["Read(./.env)", "Bash(git push --force:*)"]
+    "allow": [
+      "Bash(npm test:*)",
+      "Bash(npm run dev)",
+      "Bash(npm start)"
+    ],
+    "ask": [
+      "Bash(git push:*)"
+    ],
+    "deny": [
+      "Read(./**/.env)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)"
+    ]
   }
 }
 ```
